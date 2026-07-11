@@ -1,0 +1,88 @@
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import { useGymStore } from '../store/useGymStore';
+
+export default function Layout({ usuarioActual, onLogout }) {
+  const location = useLocation();
+  const { configuracion } = useGymStore();
+
+  // Estilo "Stealth": Bloque blanco puro para el activo, texto gris para los inactivos
+  const isActive = (path) => location.pathname === path 
+    ? "bg-white text-black font-black" 
+    : "text-neutral-500 hover:text-white transition-colors";
+
+  const puedeVer = (permiso) => usuarioActual.permisos?.includes(permiso);
+
+  return (
+    <div className="flex h-screen bg-black font-sans text-neutral-200 print:bg-white">
+      
+      {/* Sidebar Negro Profundo */}
+      <aside className="w-64 bg-[#050505] flex flex-col border-r border-neutral-900 relative z-20 print:hidden">
+        
+        <div className="p-8 border-b border-neutral-900 flex flex-col items-center justify-center gap-4 min-h-[7rem]">
+          {configuracion?.logo && (
+            <img 
+              src={configuracion.logo} 
+              alt="Logo Gym" 
+              className="max-h-12 max-w-[12rem] object-contain grayscale" 
+            />
+          )}
+          <h1 className="text-sm font-black text-white tracking-[0.3em] text-center uppercase">
+            {configuracion?.nombreGym || 'GYM'}
+          </h1>
+        </div>
+        
+        <nav className="flex-1 px-4 py-8 space-y-1 overflow-y-auto">
+          {usuarioActual.rol === 'recepcionista' && puedeVer('pos') && (
+            <Link to="/pos" className={`block px-5 py-3 rounded-lg text-xs uppercase tracking-widest ${isActive('/pos')}`}>Punto de Venta</Link>
+          )}
+
+          {puedeVer('dashboard') && <Link to="/" className={`block px-5 py-3 rounded-lg text-xs uppercase tracking-widest ${isActive('/')}`}>Dashboard</Link>}
+          {puedeVer('kiosco') && <Link to="/checkin" className={`hidden md:block xl:hidden px-5 py-3 rounded-lg text-xs uppercase tracking-widest ${isActive('/checkin')}`}>Kiosco Acceso</Link>}
+          {puedeVer('miembros') && <Link to="/miembros" className={`block px-5 py-3 rounded-lg text-xs uppercase tracking-widest ${isActive('/miembros')}`}>Miembros</Link>}
+          
+          {usuarioActual.rol !== 'recepcionista' && puedeVer('pos') && (
+            <Link to="/pos" className={`block px-5 py-3 rounded-lg text-xs uppercase tracking-widest ${isActive('/pos')}`}>Punto de Venta</Link>
+          )}
+
+          {puedeVer('suscripciones') && <Link to="/suscripciones" className={`block px-5 py-3 rounded-lg text-xs uppercase tracking-widest ${isActive('/suscripciones')}`}>Suscripciones</Link>}
+          {puedeVer('inventario') && <Link to="/inventario" className={`block px-5 py-3 rounded-lg text-xs uppercase tracking-widest ${isActive('/inventario')}`}>Inventario</Link>}
+          {puedeVer('caja') && <Link to="/caja" className={`block px-5 py-3 rounded-lg text-xs uppercase tracking-widest ${isActive('/caja')}`}>Corte de Caja</Link>}
+          
+          {puedeVer('ajustes') && (
+            <div className="pt-6 mt-6 border-t border-neutral-900">
+              <Link to="/ajustes" className={`block px-5 py-3 rounded-lg text-xs uppercase tracking-widest ${isActive('/ajustes')}`}>Ajustes</Link>
+            </div>
+          )}
+        </nav>
+        
+        <div className="p-6 text-[9px] font-black tracking-[0.4em] text-center text-neutral-700 uppercase">
+          GYMSYSTEM
+        </div>
+      </aside>
+
+      <main className="flex-1 flex flex-col overflow-hidden relative z-10 print:overflow-visible">
+        
+        {/* Header Ultra Limpio */}
+        <header className="bg-black border-b border-neutral-900 h-16 flex items-center justify-between px-10 sticky top-0 z-30 print:hidden">
+          <h2 className="text-xs font-black text-neutral-400 uppercase tracking-widest">
+            {usuarioActual.rol}
+          </h2>
+          
+          <div className="flex items-center gap-5">
+            <span className="text-xs font-bold text-neutral-300 uppercase tracking-wider">
+              {usuarioActual.nombre}
+            </span>
+            <div className="w-px h-4 bg-neutral-800"></div>
+            <button onClick={onLogout} className="text-xs font-bold text-neutral-500 hover:text-white transition-colors uppercase tracking-widest">
+              Salir
+            </button>
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-y-auto p-10 bg-[#0a0a0a] print:p-0">
+          <Outlet context={{ rol: usuarioActual.rol }} /> 
+        </div>
+      </main>
+    </div>
+  );
+}

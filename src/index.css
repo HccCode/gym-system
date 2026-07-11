@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/* Fondo oscuro y texto claro por defecto en toda la app */
+body {
+  background-color: var(--color-slate-950);
+  color: var(--color-slate-100);
+}
+
+/* Scrollbar personalizado moderno */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background-color: var(--color-slate-900);
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-slate-700);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-slate-600);
+}
+
+/* Cursores interactivos globales */
+@layer base {
+  /* Cursor de "mano" para todo lo que sea clickeable */
+  button, a, select, input[type="submit"], [role="button"] {
+    @apply cursor-pointer;
+  }
+
+  /* Cursor de "prohibido" para botones deshabilitados (ej. productos sin stock) */
+  button:disabled, a:disabled, input:disabled {
+    @apply cursor-not-allowed;
+  }
+}

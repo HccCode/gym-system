@@ -1,0 +1,92 @@
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import { useGymStore } from '../store/useGymStore';
+
+export default function Layout({ usuarioActual, onLogout }) {
+  const location = useLocation();
+  const { configuracion } = useGymStore();
+
+  // Acento neón esmeralda con fondo translúcido y resplandor
+  const isActive = (path) => location.pathname === path 
+    ? "bg-lime-500/10 text-lime-400 border border-lime-500/30 font-bold shadow-[0_0_15px_rgba(132,204,22,0.15)]" 
+    : "text-zinc-500 hover:text-zinc-200 border border-transparent";
+
+  const puedeVer = (permiso) => usuarioActual.permisos?.includes(permiso);
+
+  return (
+    <div className="flex h-screen bg-[#030303] font-sans text-zinc-300 print:bg-white">
+      
+      {/* Sidebar estilo tecnológico oscuro */}
+      <aside className="w-64 bg-[#09090b] flex flex-col border-r border-zinc-900 relative z-20 print:hidden">
+        
+        <div className="p-6 border-b border-zinc-900 flex flex-col items-center justify-center gap-3 min-h-[5rem]">
+          {configuracion?.logo && (
+            <img 
+              src={configuracion.logo} 
+              alt="Logo Gym" 
+              className="max-h-14 max-w-[12rem] object-contain brightness-110 contrast-110" 
+            />
+          )}
+          <h1 className="text-xl font-black text-white tracking-widest text-center uppercase">
+            {configuracion?.nombreGym || 'GYM'}
+          </h1>
+        </div>
+        
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+          {usuarioActual.rol === 'recepcionista' && puedeVer('pos') && (
+            <Link to="/pos" className={`block px-4 py-3 rounded-xl transition-all text-sm ${isActive('/pos')}`}>🛒 Punto de Venta</Link>
+          )}
+
+          {puedeVer('dashboard') && <Link to="/" className={`block px-4 py-3 rounded-xl transition-all text-sm ${isActive('/')}`}>📊 Dashboard</Link>}
+          {puedeVer('kiosco') && <Link to="/checkin" className={`hidden md:block xl:hidden px-4 py-3 rounded-xl transition-all text-sm ${isActive('/checkin')}`}>📷 Kiosco Acceso</Link>}
+          {puedeVer('miembros') && <Link to="/miembros" className={`block px-4 py-3 rounded-xl transition-all text-sm ${isActive('/miembros')}`}>👥 Miembros</Link>}
+          
+          {usuarioActual.rol !== 'recepcionista' && puedeVer('pos') && (
+            <Link to="/pos" className={`block px-4 py-3 rounded-xl transition-all text-sm ${isActive('/pos')}`}>🛒 Punto de Venta</Link>
+          )}
+
+          {puedeVer('suscripciones') && <Link to="/suscripciones" className={`block px-4 py-3 rounded-xl transition-all text-sm ${isActive('/suscripciones')}`}>💳 Suscripciones</Link>}
+          {puedeVer('inventario') && <Link to="/inventario" className={`block px-4 py-3 rounded-xl transition-all text-sm ${isActive('/inventario')}`}>📦 Inventario</Link>}
+          {puedeVer('caja') && <Link to="/caja" className={`block px-4 py-3 rounded-xl transition-all text-sm ${isActive('/caja')}`}>💵 Corte de Caja</Link>}
+          
+          {puedeVer('ajustes') && (
+            <div className="pt-4 mt-4 border-t border-zinc-900">
+              <Link to="/ajustes" className={`block px-4 py-3 rounded-xl transition-all text-sm ${isActive('/ajustes')}`}>⚙️ Ajustes</Link>
+            </div>
+          )}
+        </nav>
+        
+        <div className="p-4 border-t border-zinc-900 text-xs font-black tracking-widest text-center text-zinc-700 uppercase">
+          GYM<span className="text-lime-500">SYSTEM</span>
+        </div>
+      </aside>
+
+      <main className="flex-1 flex flex-col overflow-hidden relative z-10 print:overflow-visible">
+        
+        {/* Header Tecnológico */}
+        <header className="bg-[#09090b]/80 backdrop-blur-md border-b border-zinc-900 h-16 flex items-center justify-between px-8 sticky top-0 z-30 print:hidden">
+          <h2 className="text-md font-bold text-white tracking-wide uppercase text-zinc-400">
+            // {usuarioActual.rol}_panel
+          </h2>
+          
+          <div className="flex items-center gap-4 border border-zinc-900 bg-black pl-2 pr-4 py-1.5 rounded-xl">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-black font-black text-xs bg-lime-400 shadow-[0_0_10px_rgba(132,204,22,0.3)]">
+              {usuarioActual.nombre.charAt(0).toUpperCase()}
+            </div>
+            <span className="text-xs font-mono font-bold text-zinc-300">
+              {usuarioActual.nombre.toUpperCase()}
+            </span>
+            <div className="w-px h-4 bg-zinc-800"></div>
+            <button onClick={onLogout} className="text-xs font-mono font-bold text-rose-500 hover:text-rose-400 transition-colors flex items-center gap-1">
+              [LOCK]
+            </button>
+          </div>
+        </header>
+
+        {/* Contenido en Negro Puro */}
+        <div className="flex-1 overflow-y-auto p-8 bg-[#030303] print:p-0">
+          <Outlet context={{ rol: usuarioActual.rol }} /> 
+        </div>
+      </main>
+    </div>
+  );
+}
