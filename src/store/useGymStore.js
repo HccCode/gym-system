@@ -5,7 +5,7 @@ export const useGymStore = create(
   persist(
     (set) => ({
       // ==========================================
-      // 1. CONFIGURACIÓN Y USUARIOS (AJUSTES)
+      // 1. CONFIGURACIÓN, USUARIOS Y SESIÓN
       // ==========================================
       configuracion: {
         logo: null,
@@ -14,9 +14,40 @@ export const useGymStore = create(
         ticketPie: 'Gracias por tu preferencia. ¡Vuelve pronto!'
       },
       usuarios: [
-        { id: 1, rol: 'admin', pin: '1234', nombre: 'Administrador Principal' },
-        { id: 2, rol: 'recepcionista', pin: '0000', nombre: 'Recepción' }
+        { 
+          id: 1, 
+          rol: 'admin', 
+          pin: '1234', 
+          nombre: 'Administrador Principal', 
+          permisos: ['dashboard', 'kiosco', 'miembros', 'pos', 'suscripciones', 'inventario', 'caja', 'ajustes'] 
+        },
+        { 
+          id: 2, 
+          rol: 'recepcionista', 
+          pin: '0000', 
+          nombre: 'Recepción', 
+          permisos: ['pos', 'miembros'] 
+        }
       ],
+
+      // === 🔥 AQUÍ ESTÁ LO QUE BORRÉ POR ERROR 🔥 ===
+      usuarioActual: null,
+
+      iniciarSesion: (pin) => {
+        let exito = false;
+        set((state) => {
+          const usuarioEncontrado = state.usuarios.find(u => u.pin === pin);
+          if (usuarioEncontrado) {
+            exito = true;
+            return { usuarioActual: usuarioEncontrado };
+          }
+          return state; // Si el PIN es incorrecto, no hacemos nada
+        });
+        return exito;
+      },
+
+      cerrarSesion: () => set({ usuarioActual: null }),
+      // =================================================
 
       actualizarConfiguracion: (nuevaConfig) => set((state) => ({ 
         configuracion: { ...state.configuracion, ...nuevaConfig } 
@@ -25,22 +56,21 @@ export const useGymStore = create(
       agregarUsuario: (usuario) => set((state) => ({ 
         usuarios: [...state.usuarios, { ...usuario, id: Date.now() }] 
       })),
+
+      editarUsuario: (id, datosActualizados) => set((state) => ({
+        usuarios: state.usuarios.map(u => u.id === id ? { ...u, ...datosActualizados } : u)
+      })),
       
       eliminarUsuario: (id) => set((state) => ({ 
         usuarios: state.usuarios.filter(u => u.id !== id) 
       })),
 
       // ==========================================
-      // 2. INVENTARIO Y CATÁLOGO
+      // 2. INVENTARIO Y PRODUCTOS
       // ==========================================
       productos: [
         { id: 1, nombre: 'Agua 1L', categoria: 'Bebida', precio: 20, stock: 15 },
         { id: 2, nombre: 'Proteína Scoop', categoria: 'Suplemento', precio: 35, stock: 0 },
-      ],
-      planes: [
-        { id: 1, nombre: 'Mensualidad Básica', precio: 400, duracionDias: 30 },
-        { id: 2, nombre: 'Anualidad VIP', precio: 3500, duracionDias: 365 },
-        { id: 3, nombre: 'Visita 1 Día', precio: 60, duracionDias: 1 },
       ],
 
       agregarProducto: (producto) => set((state) => ({ 
@@ -60,7 +90,28 @@ export const useGymStore = create(
       })),
 
       // ==========================================
-      // 3. DIRECTORIO DE MIEMBROS
+      // 3. SUSCRIPCIONES (CATÁLOGO DE PLANES)
+      // ==========================================
+      planes: [
+        { id: 1, nombre: 'Mensualidad Básica', precio: 400, duracionDias: 30 },
+        { id: 2, nombre: 'Anualidad VIP', precio: 3500, duracionDias: 365 },
+        { id: 3, nombre: 'Visita 1 Día', precio: 60, duracionDias: 1 },
+      ],
+
+      agregarPlan: (plan) => set((state) => ({ 
+        planes: [...state.planes, { ...plan, id: Date.now() }] 
+      })),
+      
+      editarPlan: (id, datosActualizados) => set((state) => ({
+        planes: state.planes.map(p => p.id === id ? { ...p, ...datosActualizados } : p)
+      })),
+      
+      eliminarPlan: (id) => set((state) => ({
+        planes: state.planes.filter(p => p.id !== id)
+      })),
+
+      // ==========================================
+      // 4. DIRECTORIO DE MIEMBROS
       // ==========================================
       miembros: [],
 
@@ -76,8 +127,45 @@ export const useGymStore = create(
         miembros: state.miembros.filter(m => m.id !== id)
       })),
 
+      registrarMiembroConSuscripcion: (miembro, plan, folio) => set((state) => {
+        const idNuevo = Date.now();
+        const hoy = new Date();
+        const fechaRegistro = hoy.toISOString().split('T')[0];
+        
+        hoy.setDate(hoy.getDate() + plan.duracionDias);
+        const fechaVencimiento = hoy.toISOString().split('T')[0];
+        
+        const matricula = `MAT-${Math.floor(1000 + Math.random() * 9000)}`;
+
+        const nuevoMiembro = {
+          ...miembro,
+          id: idNuevo,
+          matricula,
+          fechaRegistro,
+          fechaVencimiento,
+          estado: 'Activo'
+        };
+
+        const horaActual = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        const nuevoMovimiento = {
+          id: folio,
+          tipo: 'Inscripción',
+          descripcion: `Nuevo Ingreso: ${plan.nombre}`,
+          total: plan.precio,
+          hora: horaActual
+        };
+
+        return {
+          miembros: [nuevoMiembro, ...state.miembros],
+          movimientosCaja: [nuevoMovimiento, ...state.movimientosCaja],
+          ingresosHoy: state.ingresosHoy + plan.precio,
+          ventasRealizadas: state.ventasRealizadas + 1
+        };
+      }),
+
       // ==========================================
-      // 4. FLUJO DE VENTAS Y CAJA (FINANZAS)
+      // 5. FLUJO DE VENTAS Y CAJA (FINANZAS)
       // ==========================================
       ingresosHoy: 0,
       asistenciasHoy: 0,
@@ -89,11 +177,9 @@ export const useGymStore = create(
         asistenciasHoy: state.asistenciasHoy + 1
       })),
 
-      // Función maestra que cobra la membresía y actualiza el dinero en caja
       renovarMembresia: (idMiembro, plan, folio) => set((state) => {
         const horaActual = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
-        // Calcular nueva fecha de vencimiento
         const miembrosActualizados = state.miembros.map(m => {
           if (m.id === idMiembro) {
             const hoy = new Date();
@@ -103,7 +189,6 @@ export const useGymStore = create(
           return m;
         });
 
-        // Registrar el movimiento de dinero
         const nuevoMovimiento = {
           id: folio,
           tipo: 'Suscripción',
@@ -120,11 +205,9 @@ export const useGymStore = create(
         };
       }),
 
-      // Función para el POS (Punto de Venta)
       registrarVentaPos: (carrito, total, folio) => set((state) => {
         const horaActual = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         
-        // Reducir stock de los productos vendidos
         const productosActualizados = [...state.productos];
         carrito.forEach(item => {
           const prodIndex = productosActualizados.findIndex(p => p.id === item.id);
@@ -167,12 +250,12 @@ export const useGymStore = create(
           ingresosHoy: 0,
           asistenciasHoy: 0,
           ventasRealizadas: 0,
-          movimientosCaja: [] // Se limpia la caja para el siguiente turno
+          movimientosCaja: []
         };
       })
     }),
     {
-      name: 'gymsystem-storage', // Nombre del almacenamiento en el navegador
+      name: 'gymsystem-storage', 
     }
   )
 );

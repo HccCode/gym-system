@@ -1,4 +1,8 @@
+import { useGymStore } from '../store/useGymStore';
+
 export default function TicketMembresia({ miembro, plan, total, folio, nuevaFecha }) {
+  const { configuracion } = useGymStore();
+
   if (!miembro || !plan) return null;
 
   const fechaPago = new Date().toLocaleString('es-MX', {
@@ -7,12 +11,13 @@ export default function TicketMembresia({ miembro, plan, total, folio, nuevaFech
   });
 
   return (
-    // Se mantiene oculto en pantalla, se ajusta a 80mm en papel
     <div className="hidden print:block w-[80mm] text-black bg-white p-2 font-mono text-[12px] leading-tight mx-auto">
       
       <div className="text-center mb-4 border-b border-black pb-2 border-dashed">
-        <h1 className="text-2xl font-black uppercase tracking-widest mb-1">GYMSYSTEM</h1>
-        <p className="font-bold">Sucursal Mexicali</p>
+        <h1 className="text-2xl font-black uppercase tracking-widest mb-1">
+          {configuracion?.nombreGym || 'GYMSYSTEM'}
+        </h1>
+        <p className="font-bold">{configuracion?.ticketCabecera || 'Sucursal Mexicali'}</p>
         <p>Folio: {folio}</p>
         <p>{fechaPago}</p>
       </div>
@@ -38,7 +43,6 @@ export default function TicketMembresia({ miembro, plan, total, folio, nuevaFech
         </tbody>
       </table>
 
-      {/* Recuadro de Vencimiento */}
       <div className="mb-4 text-center p-2 border-2 border-black">
         <p className="font-bold uppercase text-[10px]">Válido hasta:</p>
         <p className="text-lg font-black">{nuevaFecha}</p>
@@ -50,7 +54,7 @@ export default function TicketMembresia({ miembro, plan, total, folio, nuevaFech
 
       <div className="text-center mb-4">
         <p className="font-bold">¡GRACIAS POR TU PAGO!</p>
-        <p className="text-[10px] mt-1">Este ticket no es un comprobante fiscal.</p>
+        <p className="text-[10px] mt-1">{configuracion?.ticketPie || 'Este ticket no es un comprobante fiscal.'}</p>
         <p className="text-[10px] mt-4">- - - - - - - - - - - - - - -</p>
       </div>
     </div>

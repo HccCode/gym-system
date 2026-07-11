@@ -1,4 +1,8 @@
+import { useGymStore } from '../store/useGymStore';
+
 export default function TicketPos({ carrito, total, folio }) {
+  const { configuracion } = useGymStore();
+
   if (!carrito || carrito.length === 0) return null;
 
   const fecha = new Date().toLocaleString('es-MX', {
@@ -12,8 +16,10 @@ export default function TicketPos({ carrito, total, folio }) {
       
       {/* Encabezado del Gym */}
       <div className="text-center mb-4 border-b border-black pb-2 border-dashed">
-        <h1 className="text-2xl font-black uppercase tracking-widest mb-1">GYMSYSTEM</h1>
-        <p className="font-bold">Sucursal Mexicali</p>
+        <h1 className="text-2xl font-black uppercase tracking-widest mb-1">
+          {configuracion?.nombreGym || 'GYMSYSTEM'}
+        </h1>
+        <p className="font-bold">{configuracion?.ticketCabecera || 'Sucursal Mexicali'}</p>
         <p>Ticket: {folio}</p>
         <p>{fecha}</p>
       </div>
@@ -46,7 +52,7 @@ export default function TicketPos({ carrito, total, folio }) {
       {/* Despedida */}
       <div className="text-center mb-4">
         <p className="font-bold">¡GRACIAS POR TU COMPRA!</p>
-        <p className="text-[10px] mt-1">Este ticket no es un comprobante fiscal.</p>
+        <p className="text-[10px] mt-1">{configuracion?.ticketPie || 'Este ticket no es un comprobante fiscal.'}</p>
         <p className="text-[10px] mt-4">- - - - - - - - - - - - - - -</p>
       </div>
     </div>
