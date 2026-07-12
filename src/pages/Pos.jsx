@@ -219,7 +219,7 @@ export default function Pos() {
         </div>
       </div>
 
-      {/* MODAL GLOBAL (Reemplaza los alerts feos) */}
+      {/* MODAL GLOBAL (Reemplaza los alerts ) */}
       {modalAviso && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl w-full max-w-sm p-8 text-center">
