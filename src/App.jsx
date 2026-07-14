@@ -1,4 +1,4 @@
-import { useEffect } from 'react'; // <-- NUEVO: Hook para ejecutar código al inicio
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useGymStore } from './store/useGymStore';
 import Layout from './layouts/Layout';
@@ -14,28 +14,39 @@ import Caja from './pages/Caja';
 import Ajustes from './pages/Ajustes';
 
 const AccesoDenegado = () => (
-  <div className="flex-1 flex flex-col items-center justify-center h-full">
+  <div className="flex-1 flex flex-col items-center justify-center h-full min-h-[50vh]">
     <span className="text-6xl mb-4">🚫</span>
     <h2 className="text-2xl font-bold text-white mb-2">Acceso Restringido</h2>
-    <p className="text-slate-400">Tu rol actual no tiene permisos para ver este módulo.</p>
+    <p className="text-slate-400 text-center max-w-sm">
+      Tu cuenta actual no tiene permisos asignados o están cargando. Pide a tu administrador que revise tus accesos.
+    </p>
   </div>
 );
 
 export default function App() {
-  // Ahora también traemos 'sincronizarBD'
-  const { usuarioActual, cerrarSesion, sincronizarBD } = useGymStore();
+  const { usuarioActual, usuarios, cerrarSesion, sincronizarBD } = useGymStore();
 
-  // AL ARRANCAR LA APP: Disparamos la petición al Backend
-useEffect(() => {
+  useEffect(() => {
     sincronizarBD();
   }, [sincronizarBD]);
 
   const tienePermiso = (permisoRequerido) => {
     if (usuarioActual?.rol === 'admin') return true; 
-    return usuarioActual?.permisos?.includes(permisoRequerido);
+    const usuarioFresco = usuarios?.find(u => u.pin === usuarioActual?.pin) || usuarioActual;
+    return usuarioFresco?.permisos?.includes(permisoRequerido);
   };
 
-  const esGerencial = ['admin', 'gerente', 'subgerente'].includes(usuarioActual?.rol);
+  // Redirección inteligente corregida para incluir el Kiosco de acceso
+  const obtenerRutaInicial = () => {
+    if (tienePermiso('pos')) return "/pos";
+    if (tienePermiso('miembros')) return "/miembros";
+    if (tienePermiso('kiosco')) return "/checkin"; // <-- CORRECCIÓN: Envía directo al panel de escaneo si solo tiene este permiso
+    if (tienePermiso('inventario')) return "/inventario";
+    if (tienePermiso('suscripciones')) return "/suscripciones";
+    if (tienePermiso('caja')) return "/caja";
+    if (tienePermiso('ajustes')) return "/ajustes";
+    return "/login"; 
+  };
 
   return (
     <BrowserRouter>
@@ -58,9 +69,7 @@ useEffect(() => {
           }
         >
           <Route index element={
-            esGerencial ? <Dashboard /> : 
-            tienePermiso('pos') ? <Navigate to="/pos" replace /> : 
-            <Navigate to="/miembros" replace />
+            tienePermiso('dashboard') ? <Dashboard /> : <Navigate to={obtenerRutaInicial()} replace />
           } />
 
           <Route path="miembros" element={tienePermiso('miembros') ? <Miembros /> : <AccesoDenegado />} />

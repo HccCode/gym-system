@@ -1,7 +1,18 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  server: {
+    host: true, // Permite conexiones en red local
+    port: 5173,
+    proxy: {
+      // 🔥 EL PUENTE MÁGICO: Todo lo que vaya a /api, mándalo al backend
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        secure: false
+      }
+    }
+  }
 })

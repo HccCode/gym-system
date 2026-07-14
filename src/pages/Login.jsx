@@ -69,7 +69,7 @@ export default function Login({ onLoginExitoso }) {
           <img src={configuracion.logo} alt="Logo" className="w-16 h-16 rounded-2xl mb-4 object-cover shadow-lg shadow-blue-900/20 border border-slate-800" />
         )}
         <h1 className="text-4xl font-black text-white tracking-tight">
-          {configuracion?.nombreGym || 'GYM'}<span className="text-blue-500">SYSTEM</span>
+          {configuracion?.nombreGym || 'GYM'}<span className="text-blue-500"></span>
         </h1>
         <p className="text-slate-400 mt-2 font-medium">Ingresa tu código de acceso</p>
       </div>
